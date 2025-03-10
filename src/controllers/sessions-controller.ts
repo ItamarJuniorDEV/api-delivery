@@ -1,8 +1,11 @@
 import { AppError } from "@/utils/AppError";
 import { Request , Response } from "express";
+import { authConfig} from "@/configs/auth";
 import { prisma } from "@/database/prisma";
+import { sign } from "jsonwebtoken"
 import { compare } from "bcrypt";
 import { z } from "zod";
+
 class SessionsController {
   async create(req: Request, res: Response) {
     const bodySchema = z.object({
@@ -26,7 +29,17 @@ class SessionsController {
       throw new AppError("Email ou Senha inválido", 401);
     }
 
-    return res.json({ message: "ok" });
+    const { secret, expiresIn } = authConfig.jwt;
+
+    const token  = sign(
+    { role: user.role ?? "customer"},
+     secret, 
+    {
+      subject: user.id,
+      expiresIn,
+     })
+
+    return res.json({ token });
   }
 }
 
