@@ -20,6 +20,10 @@ class DeliveryLogsController {
       throw new AppError("Entrega não encontrada", 404)
     }
 
+    if(delivery.status === "delivered"){
+      throw new AppError("O pedido já foi entregue")
+    }
+
     if(delivery.status === "processing"){
       throw new AppError("Entrega em processamento", 404)
     }
