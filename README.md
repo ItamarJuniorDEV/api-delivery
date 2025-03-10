@@ -2,7 +2,7 @@
 
 API RESTful para sistema de entrega com autenticação e rastreamento de pedidos, construída com Express, TypeScript, Prisma e JWT.
 
-![Swagger UI](docs\doc-swagger-api-delivery.png)
+![Swagger UI](docs/doc-swagger-api-delivery.png)
 
 ## 📋 Funcionalidades
 
