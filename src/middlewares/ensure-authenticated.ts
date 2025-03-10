@@ -31,3 +31,5 @@ function ensureAuthenticated(req: Request, res: Response, next: NextFunction) {
     throw new AppError('Token inválido', 401);
   }
 }
+
+export { ensureAuthenticated }
