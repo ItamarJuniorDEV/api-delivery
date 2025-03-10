@@ -17,7 +17,7 @@ class DeliveryLogsController {
     })
 
     if(!delivery){
-      throw new AppError("Entrega não encontrada",404)
+      throw new AppError("Entrega não encontrada", 404)
     }
 
     if(delivery.status === "processing"){
@@ -32,6 +32,28 @@ class DeliveryLogsController {
     })
     
     return res.status(201).json()
+  }
+
+  async show(req: Request, res: Response) {
+    const paramsSchema = z.object({
+      delivery_id: z.string().uuid(),
+    })
+
+    const { delivery_id } = paramsSchema.parse(req.params)
+
+    const delivery = await prisma.delivery.findUnique({
+      where: { id: delivery_id },
+    })
+
+    if(!delivery) {
+      throw new AppError("Entrega não encontrada", 404)
+    }
+
+    if (req.user?.role === "customer" && req.user?.id !== delivery.userId) {
+      throw new AppError("Não autorizado", 401)
+    }
+
+    return res.json(delivery)
   }
 }
 
