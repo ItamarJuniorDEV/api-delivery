@@ -17,7 +17,7 @@ class UsersController {
     const userWithSameEmail = await prisma.user.findFirst({ where: { email } })
     
     if(userWithSameEmail){
-      throw new AppError("Usuário com esse email já existe")
+      throw new AppError("Email já existente!")
     }
 
     const hashedPassword = await hash(password, 8)
@@ -32,7 +32,7 @@ class UsersController {
 
     const { password: _, ...userWithoutPassword } = user;
 
-    return res.json(userWithoutPassword);      
+    return res.status(201).json(userWithoutPassword);      
   }
 }
 
