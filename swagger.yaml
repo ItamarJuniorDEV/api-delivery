@@ -1,0 +1,450 @@
+openapi: 3.0.0
+info:
+  title: API de Delivery
+  description: API RESTful para sistema de delivery com autenticação e rastreamento de pedidos
+  version: 1.0.0
+  contact:
+    name: Suporte
+servers:
+  - url: http://localhost:3333
+    description: Servidor de desenvolvimento
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT de autenticação
+  
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do usuário
+        name:
+          type: string
+          description: Nome do usuário
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+        role:
+          type: string
+          enum: [customer, sale]
+          default: customer
+          description: Função do usuário no sistema
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação do usuário
+      required:
+        - id
+        - name
+        - email
+    
+    Delivery:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único da entrega
+        userId:
+          type: string
+          format: uuid
+          description: ID do usuário associado à entrega
+        description:
+          type: string
+          description: Descrição da entrega
+        status:
+          type: string
+          enum: [processing, shipped, delivered]
+          default: processing
+          description: Status atual da entrega
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação da entrega
+        user:
+          $ref: '#/components/schemas/User'
+      required:
+        - id
+        - userId
+        - description
+        - status
+    
+    DeliveryLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID único do log de entrega
+        deliveryId:
+          type: string
+          format: uuid
+          description: ID da entrega associada
+        description:
+          type: string
+          description: Descrição do log
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação do log
+      required:
+        - id
+        - deliveryId
+        - description
+    
+    DeliveryWithLogs:
+      allOf:
+        - $ref: '#/components/schemas/Delivery'
+        - type: object
+          properties:
+            logs:
+              type: array
+              items:
+                $ref: '#/components/schemas/DeliveryLog'
+    
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensagem de erro
+        issues:
+          type: object
+          description: Detalhes de erros de validação (apenas para erros de validação)
+    
+    UserCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          description: Nome do usuário
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+        password:
+          type: string
+          minLength: 6
+          description: Senha do usuário (mínimo 6 caracteres)
+      required:
+        - name
+        - email
+        - password
+    
+    SessionRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email do usuário
+        password:
+          type: string
+          minLength: 6
+          description: Senha do usuário
+      required:
+        - email
+        - password
+    
+    SessionResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Token JWT para autenticação
+        user:
+          $ref: '#/components/schemas/User'
+    
+    DeliveryCreateRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: ID do usuário que receberá a entrega
+        description:
+          type: string
+          description: Descrição da entrega
+      required:
+        - user_id
+        - description
+    
+    DeliveryStatusUpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [processing, shipped, delivered]
+          description: Novo status da entrega
+      required:
+        - status
+    
+    DeliveryLogCreateRequest:
+      type: object
+      properties:
+        delivery_id:
+          type: string
+          format: uuid
+          description: ID da entrega para qual o log será associado
+        description:
+          type: string
+          description: Descrição do log da entrega
+      required:
+        - delivery_id
+        - description
+    
+paths:
+  /users:
+    post:
+      tags:
+        - Usuários
+      summary: Criar um novo usuário
+      description: Cria um novo usuário no sistema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+            example:
+              name: "Ana"
+              email: "ana@email.com"
+              password: "123456"
+      responses:
+        '201':
+          description: Usuário criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Erro de validação ou email já existente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Email já existente!"
+  
+  /sessions:
+    post:
+      tags:
+        - Autenticação
+      summary: Criar uma nova sessão
+      description: Autentica o usuário e retorna um token JWT para acesso às rotas protegidas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SessionRequest'
+            example:
+              email: "ana@email.com"
+              password: "123456"
+      responses:
+        '200':
+          description: Autenticação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+              example:
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                user:
+                  id: "8ac7549a-e62e-47d1-b0e7-b76aa3306009"
+                  name: "Ana"
+                  email: "ana@email.com"
+                  role: "customer"
+                  createdAt: "2025-03-09T10:00:00.000Z"
+        '401':
+          description: Email ou senha inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Email ou Senha inválido"
+  
+  /deliveries:
+    post:
+      tags:
+        - Entregas
+      summary: Criar uma nova entrega
+      description: Cria uma nova entrega no sistema
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryCreateRequest'
+            example:
+              user_id: "8ac7549a-e62e-47d1-b0e7-b76aa3306009"
+              description: "Teclado"
+      responses:
+        '201':
+          description: Entrega criada com sucesso
+        '401':
+          description: Não autorizado - Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Não autorizado"
+    
+    get:
+      tags:
+        - Entregas
+      summary: Listar todas as entregas
+      description: Retorna a lista de todas as entregas cadastradas
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de entregas retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Delivery'
+        '401':
+          description: Não autorizado - Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Não autorizado"
+  
+  /deliveries/{id}/status:
+    patch:
+      tags:
+        - Entregas
+      summary: Atualizar status da entrega
+      description: Atualiza o status de uma entrega específica
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID da entrega a ser atualizada
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryStatusUpdateRequest'
+            example:
+              status: "shipped"
+      responses:
+        '200':
+          description: Status da entrega atualizado com sucesso
+        '401':
+          description: Não autorizado - Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Não autorizado"
+        '404':
+          description: Entrega não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Entrega não encontrada"
+  
+  /delivery-logs:
+    post:
+      tags:
+        - Logs de Entrega
+      summary: Criar um novo log de entrega
+      description: Adiciona um novo log a uma entrega existente
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeliveryLogCreateRequest'
+            example:
+              delivery_id: "1a1686e8-3bee-4ed6-b0d8-3079d80b1fd1"
+              description: "Pedido em trânsito"
+      responses:
+        '201':
+          description: Log de entrega criado com sucesso
+        '401':
+          description: Não autorizado - Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Não autorizado"
+        '404':
+          description: Entrega não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Entrega não encontrada"
+  
+  /delivery-logs/{delivery_id}/show:
+    get:
+      tags:
+        - Logs de Entrega
+      summary: Obter detalhes de uma entrega com seus logs
+      description: Retorna os detalhes completos de uma entrega incluindo todos os seus logs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: delivery_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID da entrega
+      responses:
+        '200':
+          description: Detalhes da entrega retornados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeliveryWithLogs'
+        '401':
+          description: Não autorizado - Token inválido ou ausente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Não autorizado"
+        '404':
+          description: Entrega não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: "Entrega não encontrada"
