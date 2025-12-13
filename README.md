@@ -4,7 +4,7 @@ API RESTful para sistema de entrega com autenticação e rastreamento de pedidos
 
 ![Swagger UI](docs/doc-swagger-api-delivery.png)
 
-## 📋 Funcionalidades
+## Funcionalidades
 
 * Autenticação JWT com controle de acesso baseado em funções (RBAC)
 * Usuários com perfis diferentes: clientes e vendedores
@@ -12,7 +12,7 @@ API RESTful para sistema de entrega com autenticação e rastreamento de pedidos
 * Sistema de logs para acompanhamento completo das etapas de entrega
 * Documentação interativa com Swagger
 
-## 🚀 Tecnologias
+## Tecnologias
 
 * **Node.js** - Ambiente de execução
 * **TypeScript** - Superset JavaScript com tipagem estática
@@ -26,7 +26,7 @@ API RESTful para sistema de entrega com autenticação e rastreamento de pedidos
 * **Swagger** - Documentação interativa
 * **Docker** - Conteinerização
 
-## 📦 Instalação
+## Instalação
 
 ```bash
 # Clone o repositório
@@ -50,7 +50,7 @@ npx prisma migrate dev
 npm run dev
 ```
 
-## 🔐 Autenticação
+## Autenticação
 
 A API utiliza JWT (JSON Web Token) para autenticação. Para acessar rotas protegidas:
 
@@ -73,7 +73,7 @@ A API utiliza JWT (JSON Web Token) para autenticação. Para acessar rotas prote
 | Logs | `POST` | `/delivery-logs` | Adicionar um registro a uma entrega |
 | Logs | `GET` | `/delivery-logs/:delivery_id/show` | Obter detalhes completos com logs |
 
-## 💾 Modelos de Dados
+## Modelos de Dados
 
 **Usuário**
 * ID, nome, email, senha (hash), função (cliente/sale), data de criação
@@ -84,7 +84,7 @@ A API utiliza JWT (JSON Web Token) para autenticação. Para acessar rotas prote
 **Log de Entrega**
 * ID, ID da entrega, descrição, data de criação
 
-## 🧪 Testes
+## Testes
 
 ```bash
 # Execute os testes
@@ -94,7 +94,7 @@ npm run test:dev
 * Testes unitários para os controladores
 * Testes de integração para endpoints usando SuperTest
 
-## 📚 Documentação
+## Documentação
 
 A documentação completa está disponível via Swagger UI:
 ```
@@ -103,10 +103,10 @@ http://localhost:3333/api-docs
 
 Inclui todos os endpoints, parâmetros, modelos e exemplos de uso.
 
-## 📝 Licença
+## Licença
 
 Este projeto está licenciado sob a licença MIT.
 
-## 👨‍💻 Autor
+## Autor
 
 Itamar Junior
