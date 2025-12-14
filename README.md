@@ -61,7 +61,7 @@ A API utiliza JWT (JSON Web Token) para autenticação. Para acessar rotas prote
 * **cliente**: Visualiza apenas suas próprias entregas
 * **sale**: Acesso total - cria entregas, atualiza status e visualiza todas as entregas
 
-## 🔄 Endpoints
+## Endpoints
 
 | Recurso | Método | Endpoint | Descrição |
 |---------|--------|----------|-----------|
