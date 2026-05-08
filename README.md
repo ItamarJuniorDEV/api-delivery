@@ -1,112 +1,85 @@
-# API de Entrega
+# api-delivery
 
-API RESTful para sistema de entrega com autenticação e rastreamento de pedidos, construída com Express, TypeScript, Prisma e JWT.
+API REST para gestão de entregas com autenticação por JWT, controle de acesso por papel (cliente e vendedor) e rastreamento de status com histórico em log.
 
-![Swagger UI](docs/doc-swagger-api-delivery.png)
+## Funcionalidades
 
-## 📋 Funcionalidades
+- Cadastro e autenticação de usuários
+- Controle de acesso baseado em papel — clientes consultam apenas suas próprias entregas; vendedores gerenciam todas
+- CRUD de entregas com status `processing`, `shipped` e `delivered`
+- Log automático na mudança de status, mais a possibilidade de registrar eventos manuais
+- Rate limiting no login (5 tentativas / 15 min) para mitigar brute-force
+- Validação de input com Zod em todos os endpoints
+- Documentação interativa via Swagger UI
 
-* Autenticação JWT com controle de acesso baseado em funções (RBAC)
-* Usuários com perfis diferentes: clientes e vendedores
-* Criação e rastreamento de entregas em tempo real
-* Sistema de logs para acompanhamento completo das etapas de entrega
-* Documentação interativa com Swagger
+## Stack
 
-## 🚀 Tecnologias
+- Node.js + TypeScript
+- Express
+- Prisma ORM + PostgreSQL
+- Zod
+- JWT + bcrypt
+- Jest + Supertest
+- express-rate-limit
+- Swagger UI
 
-* **Node.js** - Ambiente de execução
-* **TypeScript** - Superset JavaScript com tipagem estática
-* **Express** - Framework web rápido e minimalista
-* **Prisma** - ORM moderno para TypeScript
-* **PostgreSQL** - Banco de dados relacional
-* **JWT** - Autenticação baseada em tokens
-* **Bcrypt** - Hash seguro para senhas
-* **Zod** - Validação de esquemas
-* **Jest** - Framework de testes
-* **Swagger** - Documentação interativa
-* **Docker** - Conteinerização
+## Como rodar localmente
 
-## 📦 Instalação
+Pré-requisitos: Node 20+ e Docker.
 
 ```bash
-# Clone o repositório
 git clone https://github.com/ItamarJuniorDEV/api-delivery
 cd api-delivery
 
-# Instale as dependências
+cp .env-example .env
+# edite .env com as variáveis abaixo
+
 npm install
-
-# Configure as variáveis de ambiente (.env)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/api-delivery?schema=public"
-JWT_SECRET=seu_segredo_jwt
-
-# Inicie o banco de dados via Docker
 docker-compose up -d
+npx prisma migrate deploy
 
-# Execute as migrações do Prisma
-npx prisma migrate dev
-
-# Inicie o servidor
 npm run dev
 ```
 
-## 🔐 Autenticação
+Variáveis em `.env`:
 
-A API utiliza JWT (JSON Web Token) para autenticação. Para acessar rotas protegidas:
+```
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/api-delivery?schema=public"
+JWT_SECRET="uma-string-secreta-de-pelo-menos-32-caracteres"
+```
 
-1. Faça login via endpoint `POST /sessions`
-2. Use o token recebido no cabeçalho: `Authorization: Bearer {seu_token_jwt}`
+API sobe em `http://localhost:3333`. Documentação interativa em `http://localhost:3333/api-docs`.
 
-**Níveis de Acesso:**
-* **cliente**: Visualiza apenas suas próprias entregas
-* **sale**: Acesso total - cria entregas, atualiza status e visualiza todas as entregas
+## Endpoints
 
-## 🔄 Endpoints
+| Método | Rota                                | Auth   | Descrição                          |
+|--------|-------------------------------------|--------|------------------------------------|
+| POST   | `/users`                            | —      | Cadastra usuário                   |
+| POST   | `/sessions`                         | —      | Login, retorna JWT (rate-limited)  |
+| POST   | `/deliveries`                       | sale   | Cria entrega                       |
+| GET    | `/deliveries`                       | sale   | Lista entregas                     |
+| PATCH  | `/deliveries/:id/status`            | sale   | Atualiza status da entrega         |
+| POST   | `/delivery-logs`                    | sale   | Registra evento manual no log      |
+| GET    | `/delivery-logs/:delivery_id/show`  | both   | Detalhes da entrega + histórico    |
 
-| Recurso | Método | Endpoint | Descrição |
-|---------|--------|----------|-----------|
-| Usuários | `POST` | `/users` | Criar um usuário |
-| Autenticação | `POST` | `/sessions` | Fazer login e obter token JWT |
-| Entregas | `POST` | `/deliveries` | Criar uma nova entrega |
-| Entregas | `GET` | `/deliveries` | Listar todas as entregas |
-| Entregas | `PATCH` | `/deliveries/:id/status` | Atualizar o status de uma entrega |
-| Logs | `POST` | `/delivery-logs` | Adicionar um registro a uma entrega |
-| Logs | `GET` | `/delivery-logs/:delivery_id/show` | Obter detalhes completos com logs |
+Papéis: `customer` (cliente) e `sale` (vendedor).
 
-## 💾 Modelos de Dados
+## Modelos
 
-**Usuário**
-* ID, nome, email, senha (hash), função (cliente/sale), data de criação
+**User** — `id`, `name`, `email` (único), `password` (hash bcrypt), `role`, `createdAt`, `updatedAt`
 
-**Entrega**
-* ID, descrição, ID do usuário, status (processando/enviado/entregue), data de criação
+**Delivery** — `id`, `userId`, `description`, `status`, `createdAt`, `updatedAt`
 
-**Log de Entrega**
-* ID, ID da entrega, descrição, data de criação
+**DeliveryLog** — `id`, `deliveryId`, `description`, `createdAt`, `updatedAt`
 
-## 🧪 Testes
+## Testes
 
 ```bash
-# Execute os testes
 npm run test:dev
 ```
 
-* Testes unitários para os controladores
-* Testes de integração para endpoints usando SuperTest
+Testes de integração com Supertest cobrindo cadastro de usuário e login.
 
-## 📚 Documentação
+## Autor
 
-A documentação completa está disponível via Swagger UI:
-```
-http://localhost:3333/api-docs
-```
-
-Inclui todos os endpoints, parâmetros, modelos e exemplos de uso.
-
-## 📝 Licença
-
-Este projeto está licenciado sob a licença MIT.
-
-## 👨‍💻 Autor
-
-Itamar Junior
+Itamar Junior — [github.com/ItamarJuniorDEV](https://github.com/ItamarJuniorDEV)
