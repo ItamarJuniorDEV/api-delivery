@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/database/prisma';
 import { AppError } from '@/utils/AppError';
 import { hash } from 'bcrypt';
@@ -14,25 +15,26 @@ class UsersController {
 
     const { name, email, password } = bodySchema.parse(req.body);
 
-    const userWithSameEmail = await prisma.user.findFirst({ where: { email } })
-    
-    if(userWithSameEmail){
-      throw new AppError("Email já existente!")
-    }
-
     const hashedPassword = await hash(password, 8)
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword
-      },
-    })
+    try {
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword
+        },
+      })
 
-    const { password: _, ...userWithoutPassword } = user;
+      const { password: _, ...userWithoutPassword } = user;
 
-    return res.status(201).json(userWithoutPassword);      
+      return res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new AppError("Email já existente!")
+      }
+      throw error;
+    }
   }
 }
 
